@@ -24,8 +24,8 @@ class PatientDataset(Dataset):
         data = np.genfromtxt(data_file, delimiter=',')[1:]
         true = np.genfromtxt(survival_file, delimiter=',')[1:].T
 
-        max_vals = np.max(data, axis=0, keepdims=True)
-        min_vals = np.min(data, axis=0, keepdims=True)
+        max_vals = np.max(data, axis=0)
+        min_vals = np.min(data, axis=0)
         self.transform = lambda x: 2 * ((x - min_vals) / (max_vals - min_vals)) - 1
 
         # select with ids
