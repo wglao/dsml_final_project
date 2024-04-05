@@ -27,17 +27,15 @@ RUN sudo apt update\
 # python packages
 RUN pip3 install --upgrade pip wheel\
     && pip3 install numpy scipy\
-    && pip3 install matplotlib wandb\
-    && pip3 install imageio[ffmpeg]
+    && pip3 install matplotlib plotly wandb
 
 RUN pip3 install torch\
     && pip3 install torchvision\
     && pip3 install torchaudio
 
-RUN pip3 install "jax[cuda12_pip]" jaxlib==0.4.23+cuda12.cudnn89 -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+RUN pip3 install "jax[cuda12_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 RUN pip3 install equinox optax\
-    && pip3 install ott-jax\
     && pip3 install jax-dataloader
 
 EXPOSE 3000
