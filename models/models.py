@@ -15,5 +15,5 @@ class NaiveMLP(nn.Module):
         x = F.relu(self.lin_in(x))
         for hidden in self.hidden_list:
             x = F.relu(hidden(x))
-        x = self.out(x)
+        x = self.lin_out(x)
         return x
