@@ -26,8 +26,10 @@ RUN sudo apt update\
 
 # python packages
 RUN pip3 install --upgrade pip wheel\
-    && pip3 install numpy scipy\
-    && pip3 install matplotlib plotly wandb
+    && pip3 install numpy scipy pandas\
+    && pip3 install matplotlib plotly seaborn wandb
+
+RUN pip3 install scikit-learn lifelines statsmodels
 
 RUN pip3 install torch\
     && pip3 install torchvision\
