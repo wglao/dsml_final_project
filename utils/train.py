@@ -15,7 +15,6 @@ def timeseries_MSE_loss(pred_y, y, dt=None):
 # L2 loss using Lagrange 1st order interpolant
 # default to daily prediction
 def timeseries_L2_loss(pred_y, y, dt: float = 1.0):
-    print(y.shape)
     time_integrate = dt * torch.ones_like(y)
     time_integrate[0] = 0.5 * dt
     time_integrate[-1] = 0.5 * dt
