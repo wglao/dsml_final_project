@@ -32,7 +32,7 @@ def timeseries_H1_loss(pred_y, y, dt: float = 1.0):
     
     L2_value = torch.sqrt(time_integrate @ ((pred_y - y) ** 2))
     H1_value = L2_value + torch.sqrt(
-        time_integrate @ ((torch.gradient(pred_y - y,spacing=dt, edge_order=2)) ** 2))
+        time_integrate @ ((torch.gradient(pred_y - y,spacing=dt, edge_order=2)[0]) ** 2))
     return H1_value
 
 
