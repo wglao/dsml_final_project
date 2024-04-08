@@ -41,11 +41,11 @@ class ResNet(nn.Module):
 class DeepONet(nn.Module):
     def __init__(self, branch_dict: dict, trunk_dict: dict) -> None:
         super().__init__()
-        self.branch_net = ResNet(**branch_dict)
-        self.trunk_net = ResNet(**trunk_dict)
+        self.branch_net = branch_dict["Net"](**branch_dict["Args"])
+        self.trunk_net = trunk_dict["Net"](**trunk_dict["Args"])
         
     def forward(self, x, t):
         c = self.branch_net(x)
-        v = self.trunk_net(t)
+        v = self.trunk_net(torch.as_tensor([t]))
         y = c @ v
         return y
