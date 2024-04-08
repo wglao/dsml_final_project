@@ -35,3 +35,15 @@ class ResNet(nn.Module):
             x = F.relu(batch_norm(x))
         x = self.lin_out(x)
         return x
+
+class DeepONet(nn.Module):
+    def __init__(self, branch_dict: dict, trunk_dict: dict) -> None:
+        super().__init__()
+        self.branch_net = ResNet(**branch_dict)
+        self.trunk_net = ResNet(**trunk_dict)
+        
+    def forward(self, x, t):
+        c = self.branch_net(x)
+        v = self.trunk_net(t)
+        y = c @ v
+        return y

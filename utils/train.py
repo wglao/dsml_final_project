@@ -23,17 +23,16 @@ def timeseries_L2_loss(pred_y, y, dt: float = 1.0):
     return loss_value
 
 
-# H1 loss using C1 and P0 interpolant
+# H1 loss using C1 interpolants (use FD appx for gradient)
 # default to daily prediction
 def timeseries_H1_loss(pred_y, y, dt: float = 1.0):
-    time_integrate_1 = dt * torch.ones_like(y)
-    time_integrate_1[0] = 0.5 * dt
-    time_integrate_1[-1] = 0.5 * dt
-    time_integrate_2 = dt * torch.ones_like(y)[1:]
+    time_integrate = dt * torch.ones_like(y)
+    time_integrate[0] = 0.5 * dt
+    time_integrate[-1] = 0.5 * dt
     
-    L2_value = torch.sqrt(time_integrate_1 @ ((pred_y - y) ** 2))
+    L2_value = torch.sqrt(time_integrate @ ((pred_y - y) ** 2))
     H1_value = L2_value + torch.sqrt(
-        time_integrate_2 @ ((torch.diff(pred_y - y)) ** 2))
+        time_integrate @ ((torch.gradient(pred_y - y,spacing=dt, edge_order=2)) ** 2))
     return H1_value
 
 
@@ -92,6 +91,33 @@ def noisy_mlp_epoch(
 
     return last_loss, running_loss / len(train_loader)
 
+def noisy_onet_epoch(
+    model,
+    optimizer,
+    train_loader,
+    loss_fn: callable = timeseries_MSE_loss,
+    dt: float = 1.0,
+    noise_variance: float = 0.01
+):
+    model.train(True)
+    running_loss = 0.0
+    last_loss = 0.0
+
+    for batch in iter(train_loader):
+        xs, ys = batch
+        optimizer.zero_grad()
+        for x, y in zip(xs,ys):
+            noise = noise_variance * torch.randn(x.shape[0])
+            noisy_x = x + noise
+            pred_y = torch.as_tensor([model(noisy_x, t) for t in range(1,286)])
+            loss = loss_fn(pred_y, y, dt)
+            loss.backward()
+        optimizer.step()
+
+        last_loss = loss.item()
+        running_loss += loss.item()
+
+    return last_loss, running_loss / len(train_loader)
 
 
 def naive_mlp_test(
@@ -124,6 +150,14 @@ def naive_train(
 ):
     if log_wandb:
         wandb.init(project="DSML Final", name=name)
+    
+    filename = os.path.join(save_dir, name + ".pkl")
+    if os.path.isfile(filename):
+        os.rename(filename, filename + "-old")
+    
+    opt_filename = os.path.join(save_dir, name + "_opt.pkl")
+    if os.path.isfile(opt_filename):
+        os.rename(opt_filename, opt_filename + "-old")
 
     min_error = 1e5
     for epoch in range(num_epochs):
@@ -150,15 +184,10 @@ def naive_train(
 
         if test_loss < min_error:
             min_error = test_loss
-            filename = os.path.join(save_dir, name + ".pkl")
-            if os.path.isfile(filename):
-                os.rename(filename, filename + "-old")
+            
             with open(filename, "wb") as f:
                 pkl.dump(model, f)
 
-            opt_filename = os.path.join(save_dir, name + "_opt.pkl")
-            if os.path.isfile(opt_filename):
-                os.rename(opt_filename, opt_filename + "-old")
             with open(opt_filename, "wb") as f:
                 pkl.dump(optimizer, f)
 
