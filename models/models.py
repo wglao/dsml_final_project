@@ -43,7 +43,7 @@ class TrunkNet(nn.Module):
         super().__init__()
         lift = torch.empty((hidden_size,))
         lift_bias = torch.empty((in_size,1))
-        nn.init.kaiming_normal_(lift)
+        nn.init.kaiming_uniform_(lift)
         nn.init.kaiming_uniform_(lift_bias)
         self.lift = nn.Parameter(lift)
         self.lift_bias = nn.Parameter(lift_bias)
