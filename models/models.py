@@ -50,7 +50,7 @@ class TrunkNet(nn.Module):
         self.body = MLP(hidden_size,hidden_size,basis_dims,layers-1)
     
     def forward(self, t):
-        v = F.relu(torch.outer(t,self.lift) + self.lift_bias)
+        v = F.relu((t @ self.lift.T) + self.lift_bias)
         v = self.body(v)
         return v
 
