@@ -109,7 +109,7 @@ def noisy_onet_epoch(
         for x, y in zip(xs,ys):
             noise = noise_variance * torch.randn(x.shape[0])
             noisy_x = x + noise
-            times = torch.linspace(0,1,285)
+            times = torch.linspace(0,1,285)[:,None]
             pred_y = model(noisy_x, times)
             loss = loss_fn(pred_y, y, dt)
             loss.backward()
@@ -145,7 +145,7 @@ def onet_test(
         for batch in iter(test_loader):
             xs, ys = batch
             for x, y in zip(xs,ys):
-                times = torch.linspace(0,1,285)
+                times = torch.linspace(0,1,285)[:,None]
                 pred_y = model(x, times)
                 loss = loss_fn(pred_y, y, dt)
                 running_loss += loss.item()
