@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class NaiveMLP(nn.Module):
+class MLP(nn.Module):
     def __init__(self, in_size, hidden_size, out_size, layers) -> None:
         super().__init__()
         self.lin_in = nn.Linear(in_size, hidden_size)
@@ -38,6 +38,23 @@ class ResNet(nn.Module):
         x = self.lin_out(x)
         return x
 
+class TrunkNet(nn.Module):
+    def __init__(self, in_size, hidden_size, basis_dims) -> None:
+        super().__init__()
+        lift = torch.empty((hidden_size,))
+        lift_bias = torch.empty((in_size,1))
+        nn.init.kaiming_normal_(lift)
+        nn.init.kaiming_uniform_(lift_bias)
+        self.lift = nn.Parameter(lift)
+        self.lift_bias = nn.Parameter(lift_bias)
+        self.body = MLP(hidden_size,hidden_size,basis_dims)
+    
+    def forward(self, t):
+        v = F.relu(torch.outer(t,self.lift) + self.lift_bias)
+        v = self.body(v)
+        return v
+
+
 class DeepONet(nn.Module):
     def __init__(self, branch_dict: dict, trunk_dict: dict) -> None:
         super().__init__()
@@ -46,6 +63,6 @@ class DeepONet(nn.Module):
         
     def forward(self, x, t):
         c = self.branch_net(x)
-        v = self.trunk_net(torch.as_tensor([t]))
-        y = c @ v
+        v = self.trunk_net(t)
+        y = v @ c
         return y
