@@ -109,7 +109,7 @@ def noisy_onet_epoch(
         for x, y in zip(xs,ys):
             noise = noise_variance * torch.randn(x.shape[0])
             noisy_x = x + noise
-            pred_y = torch.as_tensor([model(noisy_x, t) for t in range(1,286)])
+            pred_y = torch.as_tensor([model(noisy_x, t) for t in torch.linspace(0,1,285)])
             loss = loss_fn(pred_y, y, dt)
             loss.backward()
         optimizer.step()
@@ -120,7 +120,7 @@ def noisy_onet_epoch(
     return last_loss, running_loss / len(train_loader)
 
 
-def naive_mlp_test(
+def mlp_test(
     model, test_loader, loss_fn: callable = timeseries_MSE_loss, dt: float = 1.0
 ):
     running_loss = 0.0
@@ -130,6 +130,21 @@ def naive_mlp_test(
             xs, ys = batch
             for x, y in zip(xs,ys):
                 pred_y = model(x)
+                loss = loss_fn(pred_y, y, dt)
+                running_loss += loss.item()
+            test_loss = running_loss / len(test_loader)
+        return test_loss
+
+def onet_test(
+    model, test_loader, loss_fn: callable = timeseries_MSE_loss, dt: float = 1.0
+):
+    running_loss = 0.0
+    model.eval()
+    with torch.no_grad():
+        for batch in iter(test_loader):
+            xs, ys = batch
+            for x, y in zip(xs,ys):
+                pred_y = torch.as_tensor([model(x, t) for t in torch.linspace(0,1,285)])
                 loss = loss_fn(pred_y, y, dt)
                 running_loss += loss.item()
             test_loss = running_loss / len(test_loader)
@@ -164,7 +179,7 @@ def naive_train(
         last_loss, running_loss = naive_mlp_epoch(
             model, optimizer, train_loader, loss_fn, dt
         )
-        test_loss = naive_mlp_test(model, test_loader, loss_fn)
+        test_loss = mlp_test(model, test_loader, loss_fn)
 
         if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
             if log_wandb:
@@ -192,7 +207,7 @@ def naive_train(
                 pkl.dump(optimizer, f)
 
 
-def noisy_train(
+def noisy_train_mlp(
     model,
     optimizer,
     train_loader,
@@ -214,7 +229,61 @@ def noisy_train(
         last_loss, running_loss = noisy_mlp_epoch(
             model, optimizer, train_loader, loss_fn, dt, noise_variance
         )
-        test_loss = naive_mlp_test(model, test_loader, loss_fn)
+        test_loss = mlp_test(model, test_loader, loss_fn)
+
+        if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
+            if log_wandb:
+                wandb.log(
+                    {
+                        "Epoch": epoch,
+                        "Train Loss": running_loss,
+                        "Test Loss": test_loss,
+                        "Last Loss": last_loss,
+                    }
+                )
+            print(
+                "Epoch: {}   Train: {} ({})    Test: {}".format(
+                    epoch, running_loss, last_loss, test_loss
+                )
+            )
+
+        if test_loss < min_error:
+            min_error = test_loss
+            filename = os.path.join(save_dir, name + ".pkl")
+            if os.path.isfile(filename):
+                os.rename(filename, filename + "-old")
+            with open(filename, "wb") as f:
+                pkl.dump(model, f)
+
+            opt_filename = os.path.join(save_dir, name + "_opt.pkl")
+            if os.path.isfile(opt_filename):
+                os.rename(opt_filename, opt_filename + "-old")
+            with open(opt_filename, "wb") as f:
+                pkl.dump(optimizer, f)
+
+def noisy_train_onet(
+    model,
+    optimizer,
+    train_loader,
+    test_loader,
+    num_epochs,
+    loss_fn: callable = timeseries_MSE_loss,
+    log_wandb: bool = False,
+    name: str = "test",
+    print_every: int = 100,
+    save_dir: str = "saved_models",
+    dt: float = 1.0,
+    noise_variance: float = 0.01,
+):
+    if log_wandb:
+        wandb.init(project="DSML Final", name=name)
+
+    min_error = 1e5
+    for epoch in range(num_epochs):
+        last_loss, running_loss = noisy_onet_epoch(
+            model, optimizer, train_loader, loss_fn, dt, noise_variance
+        )
+        test_loss = onet_test(model, test_loader, loss_fn)
 
         if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
             if log_wandb:
