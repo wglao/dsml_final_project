@@ -119,8 +119,9 @@ def naive_train(
     loss_fn: callable = timeseries_MSE_loss,
     log_wandb: bool = False,
     name: str = "test",
+    save_dir: str = "saved_models",
     print_every: int = 100,
-    dt: float = 1.0,
+    dt: float = 1.0
 ):
     if log_wandb:
         wandb.init(project="DSML Final", name=name)
@@ -150,13 +151,13 @@ def naive_train(
 
         if test_loss < min_error:
             min_error = test_loss
-            filename = os.path.join("/Users/wlao/Documents/Homework/dsml_final_project/saved_models", name + ".pkl")
+            filename = os.path.join(save_dir, name + ".pkl")
             if os.path.isfile(filename):
                 os.rename(filename, filename + "-old")
             with open(filename, "wb") as f:
                 pkl.dump(model, f)
 
-            opt_filename = os.path.join("/Users/wlao/Documents/Homework/dsml_final_project/saved_models", name + "_opt.pkl")
+            opt_filename = os.path.join(save_dir, name + "_opt.pkl")
             if os.path.isfile(opt_filename):
                 os.rename(opt_filename, opt_filename + "-old")
             with open(opt_filename, "wb") as f:
@@ -173,6 +174,7 @@ def noisy_train(
     log_wandb: bool = False,
     name: str = "test",
     print_every: int = 100,
+    save_dir: str = "saved_models",
     dt: float = 1.0,
     noise_variance: float = 0.01,
 ):
@@ -204,13 +206,13 @@ def noisy_train(
 
         if test_loss < min_error:
             min_error = test_loss
-            filename = os.path.join("/Users/wlao/Documents/Homework/dsml_final_project/saved_models", name + ".pkl")
+            filename = os.path.join(save_dir, name + ".pkl")
             if os.path.isfile(filename):
                 os.rename(filename, filename + "-old")
             with open(filename, "wb") as f:
                 pkl.dump(model, f)
 
-            opt_filename = os.path.join("/Users/wlao/Documents/Homework/dsml_final_project/saved_models", name + "_opt.pkl")
+            opt_filename = os.path.join(save_dir, name + "_opt.pkl")
             if os.path.isfile(opt_filename):
                 os.rename(opt_filename, opt_filename + "-old")
             with open(opt_filename, "wb") as f:
