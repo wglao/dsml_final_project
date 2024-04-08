@@ -41,7 +41,7 @@ class ResNet(nn.Module):
 class TrunkNet(nn.Module):
     def __init__(self, in_size, hidden_size, basis_dims, layers) -> None:
         super().__init__()
-        lift = torch.empty((hidden_size,))
+        lift = torch.empty((hidden_size,1))
         lift_bias = torch.empty((in_size,1))
         nn.init.kaiming_uniform_(lift)
         nn.init.kaiming_uniform_(lift_bias)
