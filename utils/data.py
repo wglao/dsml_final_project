@@ -20,7 +20,7 @@ class PatientDataset(Dataset):
         interp_days = np.arange(1,np.max(true_days)+1)
 
         # interpolate daly values
-        true_interp = torch.tensor([np.interp(interp_days, true_days, fn) for fn in true_data])
+        true_interp = torch.tensor(np.asarray([np.interp(interp_days, true_days, fn) for fn in true_data]))
 
         max_vals = np.max(data, axis=0)
         min_vals = np.min(data, axis=0)
