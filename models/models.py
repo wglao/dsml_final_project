@@ -111,6 +111,8 @@ class DeepONet(nn.Module):
         v = self.trunk_net(t)
         if len(c.shape) == 1:
             y = v @ c[:,None]
+        elif c.shape[1] == v.shape[1]:
+            y = v @ c.T
         else:
             y = v @ c
         return y
