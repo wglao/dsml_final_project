@@ -54,7 +54,7 @@ class ResNet(nn.Module):
         return x
 
 class TrunkNet(nn.Module):
-    def __init__(self, in_size, hidden_size, basis_dims, layers):
+    def __init__(self, hidden_size, basis_dims, layers):
         super().__init__()
         lift = torch.empty((hidden_size,1))
         lift_bias = torch.empty((1,hidden_size))
@@ -70,7 +70,7 @@ class TrunkNet(nn.Module):
         return v
     
 class SirenTrunk(nn.Module):
-    def __init__(self, in_size, basis_dims, layers, freq_mod: float=30.):
+    def __init__(self, basis_dims, layers, freq_mod: float=30.):
         super().__init__()
         lift = torch.empty((basis_dims,1))
         lift_bias = torch.empty((1,basis_dims))
