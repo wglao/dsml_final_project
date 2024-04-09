@@ -255,7 +255,7 @@ def noisy_train_mlp(
             if os.path.isfile(filename):
                 os.rename(filename, filename + "-old")
             with open(filename, "wb") as f:
-                pkl.dump(model, f)
+                pkl.dump(model.state_dict(), f)
 
             opt_filename = os.path.join(save_dir, name + "_opt.pkl")
             if os.path.isfile(opt_filename):
@@ -309,7 +309,7 @@ def noisy_train_onet(
             if os.path.isfile(filename):
                 os.rename(filename, filename + "-old")
             with open(filename, "wb") as f:
-                pkl.dump(model, f)
+                pkl.dump(model.state_dict(), f)
 
             opt_filename = os.path.join(save_dir, name + "_opt.pkl")
             if os.path.isfile(opt_filename):
