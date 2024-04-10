@@ -70,28 +70,19 @@ class TrunkNet(nn.Module):
         return v
     
 class SirenTrunk(nn.Module):
-    def __init__(self, basis_dims, layers, freq_mod: float=30.):
+    def __init__(self, hidden_size, basis_dims, layers, freq_mod: float=30.):
         super().__init__()
-        lift = torch.empty((basis_dims,1))
-        lift_bias = torch.empty((1,basis_dims))
+        lift = torch.empty((hidden_size,1))
+        lift_bias = torch.empty((1,hidden_size))
         nn.init.kaiming_uniform_(lift)
         nn.init.kaiming_uniform_(lift_bias)
         self.lift = nn.Parameter(lift)
         self.lift_bias = nn.Parameter(lift_bias)
-        hidden_freqs =  freq_mod*torch.ones((layers,1,1))
-        self.hidden_freqs = nn.Parameter(hidden_freqs)
-
-        hidden_list = [nn.Linear(basis_dims, basis_dims) for _ in range(layers)]
-        self.hidden_list = nn.ModuleList(hidden_list)
-        self.bias = nn.Parameter(torch.zeros([1,basis_dims]))
+        self.body = Siren(hidden_size,hidden_size,basis_dims,layers-1,freq_mod)
     
     def forward(self,t):
-        x = torch.sin((t @ self.lift.T) + self.lift_bias)
-
-        for hidden, a in zip(self.hidden_list, self.hidden_freqs):
-            x = torch.sin(hidden(a*x))
-
-        v = x + self.bias
+        v = torch.sin((t @ self.lift.T) + self.lift_bias)
+        v = self.body(v)
         return v
 
 
