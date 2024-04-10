@@ -35,6 +35,20 @@ def timeseries_H1_loss(pred_y, y, dt: float = 1.0):
         time_integrate @ ((torch.gradient(pred_y - y,spacing=dt, edge_order=2)[0]) ** 2))
     return H1_value
 
+def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
+    time_integrate = dt * torch.ones_like(t)
+    time_integrate[0] = 0.5 * dt
+    time_integrate[-1] = 0.5 * dt
+    inner_weights = torch.diag(time_integrate)
+    v = o_net_model.trunk_net(t)
+    inner_products = v.T @ inner_weights @ v
+    up_ids = np.triu_indices(v.shape[1],1)
+    diag_ids = np.diag_indices(v.shape[1],2)
+
+    ii = inner_products[diag_ids]
+    ij = inner_products[up_ids]
+
+    loss_value = ij - ii
 
 def naive_mlp_epoch(
     model,
