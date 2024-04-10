@@ -56,7 +56,7 @@ class ResNet(nn.Module):
 class TrunkNet(nn.Module):
     def __init__(self, hidden_size, basis_dims, layers):
         super().__init__()
-        lift = torch.empty((hidden_size,1))
+        lift = torch.empty((1,hidden_size))
         lift_bias = torch.empty((1,hidden_size))
         nn.init.kaiming_uniform_(lift)
         nn.init.kaiming_uniform_(lift_bias)
@@ -72,7 +72,7 @@ class TrunkNet(nn.Module):
 class SirenTrunk(nn.Module):
     def __init__(self, hidden_size, basis_dims, layers, freq_mod: float=30.):
         super().__init__()
-        lift = torch.empty((hidden_size,1))
+        lift = torch.empty((1,hidden_size))
         lift_bias = torch.empty((1,hidden_size))
         nn.init.kaiming_uniform_(lift)
         nn.init.kaiming_uniform_(lift_bias)
@@ -81,7 +81,7 @@ class SirenTrunk(nn.Module):
         self.body = Siren(hidden_size,hidden_size,basis_dims,layers-1,freq_mod)
     
     def forward(self,t):
-        v = torch.sin((t @ self.lift.T) + self.lift_bias)
+        v = torch.sin((t @ self.lift) + self.lift_bias)
         v = self.body(v)
         return v
 
@@ -97,7 +97,7 @@ class DeepONet(nn.Module):
         v = self.trunk_net(t)
         if len(c.shape) == 1:
             y = v @ c[:,None]
-        elif c.shape[1] == v.shape[1]:
+        elif (c.shape[0] != v.shape[1]) and (c.shape[1] == v.shape[1]):
             y = v @ c.T
         else:
             y = v @ c
