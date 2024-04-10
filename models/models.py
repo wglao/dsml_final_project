@@ -74,29 +74,24 @@ class SirenTrunk(nn.Module):
         super().__init__()
         lift = torch.empty((basis_dims,1))
         lift_bias = torch.empty((1,basis_dims))
-        recomb_weights = torch.empty((layers+1,1,1))
         nn.init.kaiming_uniform_(lift)
         nn.init.kaiming_uniform_(lift_bias)
-        nn.init.kaiming_uniform_(recomb_weights)
         self.lift = nn.Parameter(lift)
         self.lift_bias = nn.Parameter(lift_bias)
-        self.recomb_weights = nn.Parameter(recomb_weights)
         hidden_freqs =  freq_mod*torch.ones((layers,1,1))
         self.hidden_freqs = nn.Parameter(hidden_freqs)
 
         hidden_list = [nn.Linear(basis_dims, basis_dims) for _ in range(layers)]
         self.hidden_list = nn.ModuleList(hidden_list)
-        self.bias = nn.Parameter(torch.zeros([1,1]))
+        self.bias = nn.Parameter(torch.zeros([1,basis_dims]))
     
     def forward(self,t):
         x = torch.sin((t @ self.lift.T) + self.lift_bias)
-        v = self.recomb_weights[0]*x
 
-        for hidden, a, w in zip(self.hidden_list, self.hidden_freqs, self.recomb_weights[1:]):
+        for hidden, a in zip(self.hidden_list, self.hidden_freqs):
             x = torch.sin(hidden(a*x))
-            v += w*x
 
-        v += self.bias
+        v = x + self.bias
         return v
 
 
