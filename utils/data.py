@@ -24,6 +24,9 @@ class PatientDataset(Dataset):
 
         max_vals = torch.tensor(np.max(data, axis=0))
         min_vals = torch.tensor(np.min(data, axis=0))
+        if cuda:
+            max_vals = max_vals.cuda()
+            min_vals = min_vals.cuda()
         self.transform = lambda x: 2 * ((x - min_vals) / (max_vals - min_vals)) - 1
 
         # select with ids
