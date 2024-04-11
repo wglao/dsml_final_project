@@ -1,5 +1,6 @@
 import os
 import torch
+import torch.nn.functional as F
 import numpy as np
 import wandb
 import pickle as pkl
@@ -64,6 +65,12 @@ def basis_non_ortho_norm(o_net_model, t, dt: float = 1.0):
     loss_value = torch.norm(inner_products[up_ids])
     return loss_value
 
+def out_of_range_loss(pred_y, min_val: float=0., max_val: float=1.):
+    above = F.relu(pred_y - max_val)
+    below = F.relu(min_val - pred_y)
+    loss_value = above + below
+    return loss_value
+
 
 def naive_mlp_epoch(
     model,
@@ -71,7 +78,8 @@ def naive_mlp_epoch(
     train_loader,
     loss_fn: callable = timeseries_MSE_loss,
     dt: float = 1.0,
-    cuda: bool =True
+    range_loss: bool = True,
+    cuda: bool = True
 ):
     model.train(True)
     running_loss = 0.0
@@ -87,6 +95,8 @@ def naive_mlp_epoch(
         pred_y = model(xs)
 
         loss = loss_fn(pred_y, ys, dt)
+        if range_loss:
+            loss = loss + out_of_range_loss(pred_y, 0, 1)
         loss.backward()
         optimizer.step()
 
@@ -103,6 +113,7 @@ def noisy_mlp_epoch(
     loss_fn: callable = timeseries_MSE_loss,
     dt: float = 1.0,
     noise_variance: float = 0.01,
+    range_loss: bool = True,
     cuda: bool = True
 ):
     model.train(True)
@@ -122,6 +133,8 @@ def noisy_mlp_epoch(
         pred_y = model(noisy_x)
 
         loss = loss_fn(pred_y, ys, dt)
+        if range_loss:
+            loss = loss + out_of_range_loss(pred_y, 0, 1)
         loss.backward()
         optimizer.step()
 
@@ -138,6 +151,7 @@ def noisy_onet_epoch(
     loss_fn: callable = timeseries_MSE_loss,
     dt: float = 1.0,
     noise_variance: float = 0.01,
+    range_loss: bool = True,
     ortho_loss: bool = True,
     cuda: bool = True,
 ):
@@ -162,6 +176,8 @@ def noisy_onet_epoch(
         loss = loss_fn(pred_y, ys, dt)
         if ortho_loss:
             loss = loss + basis_ortho_loss(model, times, dt)
+        if range_loss:
+            loss = loss + out_of_range_loss(pred_y, 0, 1)
         loss.backward()
         optimizer.step()
 

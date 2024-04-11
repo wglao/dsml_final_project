@@ -11,7 +11,7 @@ class MLP(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x, sigmoid: bool = True):
+    def forward(self, x, sigmoid: bool = False):
         x = F.relu(self.lin_in(x))
         for hidden in self.hidden_list:
             x = F.relu(hidden(x))
@@ -34,7 +34,7 @@ class Siren(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x, sigmoid: bool = True):
+    def forward(self, x, sigmoid: bool = False):
         x = torch.sin(self.lin_in(x))
         for hidden, a in zip(self.hidden_list, self.hidden_freqs):
             x = torch.sin(hidden(a * x))
@@ -53,7 +53,7 @@ class ResNet(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x, sigmoid: bool = True):
+    def forward(self, x, sigmoid: bool = False):
         x = F.relu(self.lin_in(x))
         for hidden in self.hidden_list:
             x = x + F.relu(hidden(x))
@@ -108,7 +108,7 @@ class DeepONet(nn.Module):
             self.trunk_net = self.trunk_net.cuda()
 
 
-    def forward(self, x, t, sigmoid: bool = True):
+    def forward(self, x, t, sigmoid: bool = False):
         c = self.branch_net(x, sigmoid=False)
         v = self.trunk_net(t)
         y = c @ v.T
