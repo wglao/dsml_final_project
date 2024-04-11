@@ -40,7 +40,6 @@ def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
     time_integrate[0] = 0.5 * dt
     time_integrate[-1] = 0.5 * dt
     inner_weights = torch.diag(time_integrate.ravel())
-    breakpoint()
     v = o_net_model.trunk_net(t)
     inner_products = v.T @ inner_weights @ v
     up_ids = np.triu_indices(inner_products.shape[0],1)
