@@ -22,8 +22,8 @@ class PatientDataset(Dataset):
         # interpolate daly values
         true_interp = torch.tensor(np.asarray([np.interp(interp_days, true_days, fn) for fn in true_data]))
 
-        max_vals = torch.max(data, dim=0)
-        min_vals = torch.min(data, dim=0)
+        max_vals = torch.tensor(np.max(data, axis=0))
+        min_vals = torch.tensor(np.min(data, axis=0))
         self.transform = lambda x: 2 * ((x - min_vals) / (max_vals - min_vals)) - 1
 
         # select with ids
