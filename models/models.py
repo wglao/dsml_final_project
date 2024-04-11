@@ -11,14 +11,14 @@ class MLP(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x, hardtanh: bool = True):
+    def forward(self, x, sigmoid: bool = True):
         x = F.relu(self.lin_in(x))
         for hidden in self.hidden_list:
             x = F.relu(hidden(x))
         x = self.lin_out(x)
 
-        if hardtanh:
-            return F.hardtanh(x, 0, 1)
+        if sigmoid:
+            return F.sigmoid(x)
         return x
 
 
@@ -34,14 +34,14 @@ class Siren(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x, hardtanh: bool = True):
+    def forward(self, x, sigmoid: bool = True):
         x = torch.sin(self.lin_in(x))
         for hidden, a in zip(self.hidden_list, self.hidden_freqs):
             x = torch.sin(hidden(a * x))
         x = self.lin_out(x)
 
-        if hardtanh:
-            return F.hardtanh(x, 0, 1)
+        if sigmoid:
+            return F.sigmoid(x)
         return x
 
 
@@ -53,14 +53,14 @@ class ResNet(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x, hardtanh: bool = True):
+    def forward(self, x, sigmoid: bool = True):
         x = F.relu(self.lin_in(x))
         for hidden in self.hidden_list:
             x = x + F.relu(hidden(x))
         x = self.lin_out(x)
 
-        if hardtanh:
-            return F.hardtanh(x, 0, 1)
+        if sigmoid:
+            return F.sigmoid(x)
         return x
 
 
@@ -108,10 +108,10 @@ class DeepONet(nn.Module):
             self.trunk_net = self.trunk_net.cuda()
 
 
-    def forward(self, x, t, hardtanh: bool = True):
-        c = self.branch_net(x, hardtanh=False)
+    def forward(self, x, t, sigmoid: bool = True):
+        c = self.branch_net(x, sigmoid=False)
         v = self.trunk_net(t)
         y = c @ v.T
-        if hardtanh:
-            return F.hardtanh(y, 0, 1)
+        if sigmoid:
+            return F.sigmoid(y)
         return y
