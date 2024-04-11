@@ -300,6 +300,7 @@ def noisy_train_mlp(
     save_dir: str = "saved_models",
     dt: float = 1.0,
     noise_variance: float = 0.01,
+    range_loss: bool = True,
     cuda: bool = True,
 ):
     if log_wandb:
@@ -308,7 +309,7 @@ def noisy_train_mlp(
     min_error = 1e5
     for epoch in range(num_epochs):
         last_loss, running_loss = noisy_mlp_epoch(
-            model, optimizer, train_loader, loss_fn, dt, noise_variance, cuda
+            model, optimizer, train_loader, loss_fn, dt, noise_variance, cuda, range_loss
         )
         test_loss = mlp_test(model, test_loader, loss_fn, cuda)
 
@@ -356,6 +357,7 @@ def noisy_train_onet(
     save_dir: str = "saved_models",
     dt: float = 1.0,
     noise_variance: float = 0.01,
+    range_loss: bool = True,
     ortho_loss: bool = True,
     cuda: bool = True,
 ):
@@ -374,6 +376,7 @@ def noisy_train_onet(
             loss_fn,
             dt,
             noise_variance,
+            range_loss,
             ortho_loss,
             cuda,
         )
