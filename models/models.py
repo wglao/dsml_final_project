@@ -109,7 +109,6 @@ class DeepONet(nn.Module):
 
 
     def forward(self, x, t, hardtanh: bool = True):
-        breakpoint()
         c = self.branch_net(x, hardtanh=False)
         v = self.trunk_net(t)
         y = c @ v.T
