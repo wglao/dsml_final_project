@@ -62,11 +62,11 @@ def naive_mlp_epoch(
     for batch in iter(train_loader):
         xs, ys = batch
         optimizer.zero_grad()
-        for x, y in zip(xs,ys):
-            pred_y = model(x)
 
-            loss = loss_fn(pred_y, y, dt)
-            loss.backward()
+        pred_y = model(xs)
+
+        loss = loss_fn(pred_y, ys, dt)
+        loss.backward()
         optimizer.step()
 
         last_loss = loss.item()
@@ -89,14 +89,13 @@ def noisy_mlp_epoch(
     for batch in iter(train_loader):
         xs, ys = batch
         optimizer.zero_grad()
-        for x, y in zip(xs,ys):
-            print(x.shape)
-            noise = noise_variance * torch.randn(x.shape)
-            noisy_x = x + noise
-            pred_y = model(noisy_x)
 
-            loss = loss_fn(pred_y, y, dt)
-            loss.backward()
+        noise = noise_variance * torch.randn(xs.shape)
+        noisy_x = xs + noise
+        pred_y = model(noisy_x)
+
+        loss = loss_fn(pred_y, ys, dt)
+        loss.backward()
         optimizer.step()
 
         last_loss = loss.item()
@@ -120,15 +119,16 @@ def noisy_onet_epoch(
     for batch in iter(train_loader):
         xs, ys = batch
         optimizer.zero_grad()
-        for x, y in zip(xs,ys):
-            noise = noise_variance * torch.randn(x.shape)
-            noisy_x = x + noise
-            times = torch.linspace(0,1,285)[:,None]
-            pred_y = model(noisy_x, times)
-            loss = loss_fn(pred_y, y, dt)
-            if ortho_loss:
-                loss = loss + basis_ortho_loss(model, times, dt)
-            loss.backward()
+
+        noise = noise_variance * torch.randn(xs.shape)
+        noisy_x = xs + noise
+        times = torch.linspace(0,1,285)[:,None]
+        pred_y = model(noisy_x, times)
+
+        loss = loss_fn(pred_y, ys, dt)
+        if ortho_loss:
+            loss = loss + basis_ortho_loss(model, times, dt)
+        loss.backward()
         optimizer.step()
 
         last_loss = loss.item()
@@ -145,10 +145,9 @@ def mlp_test(
     with torch.no_grad():
         for batch in iter(test_loader):
             xs, ys = batch
-            for x, y in zip(xs,ys):
-                pred_y = model(x)
-                loss = loss_fn(pred_y, y, dt)
-                running_loss += loss.item()
+            pred_y = model(xs)
+            loss = loss_fn(pred_y, ys, dt)
+            running_loss += loss.item()
             test_loss = running_loss / len(test_loader)
         return test_loss
 
@@ -160,11 +159,10 @@ def onet_test(
     with torch.no_grad():
         for batch in iter(test_loader):
             xs, ys = batch
-            for x, y in zip(xs,ys):
-                times = torch.linspace(0,1,285)[:,None]
-                pred_y = model(x, times)
-                loss = loss_fn(pred_y, y, dt)
-                running_loss += loss.item()
+            times = torch.linspace(0,1,285)[:,None]
+            pred_y = model(xs, times)
+            loss = loss_fn(pred_y, ys, dt)
+            running_loss += loss.item()
             test_loss = running_loss / len(test_loader)
         return test_loss
 
