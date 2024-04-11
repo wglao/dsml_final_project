@@ -98,12 +98,13 @@ def noisy_mlp_epoch(
 
     for batch in iter(train_loader):
         xs, ys = batch
+        noise = noise_variance * torch.randn(xs.shape)
         if cuda:
             xs = xs.cuda()
             ys = ys.cuda()
+            noise = noise.cuda()
         optimizer.zero_grad()
 
-        noise = noise_variance * torch.randn(xs.shape)
         noisy_x = xs + noise
         pred_y = model(noisy_x)
 
@@ -134,13 +135,14 @@ def noisy_onet_epoch(
     for batch in iter(train_loader):
         xs, ys = batch
         times = torch.linspace(0, 1, 285)[:, None]
+        noise = noise_variance * torch.randn(xs.shape)
         if cuda:
             xs = xs.cuda()
             ys = ys.cuda()
             times = times.cuda()
+            noise = noise.cuda()
         optimizer.zero_grad()
-
-        noise = noise_variance * torch.randn(xs.shape)
+        
         noisy_x = xs + noise
         pred_y = model(noisy_x, times)
 
