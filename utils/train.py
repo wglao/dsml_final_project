@@ -45,10 +45,7 @@ def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
     up_ids = np.triu_indices(v.shape[1],1)
     diag_ids = np.diag_indices(v.shape[1],2)
 
-    ii = inner_products[diag_ids]
-    ij = inner_products[up_ids]
-
-    loss_value = ij - ii
+    loss_value = inner_products[up_ids]
     return loss_value
 
 def naive_mlp_epoch(
