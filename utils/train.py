@@ -29,11 +29,14 @@ def timeseries_H1_loss(pred_y, y, dt: float = 1.0):
     time_integrate = dt * torch.ones_like(y)
     time_integrate[0] = 0.5 * dt
     time_integrate[-1] = 0.5 * dt
-    
+
     L2_value = torch.sqrt(time_integrate @ ((pred_y - y) ** 2))
     H1_value = L2_value + torch.sqrt(
-        time_integrate @ ((torch.gradient(pred_y - y,spacing=dt, edge_order=2)[0]) ** 2))
+        time_integrate
+        @ ((torch.gradient(pred_y - y, spacing=dt, edge_order=2)[0]) ** 2)
+    )
     return H1_value
+
 
 def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
     time_integrate = dt * torch.ones_like(t)
@@ -42,11 +45,12 @@ def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
     inner_weights = torch.diag(time_integrate.ravel())
     v = o_net_model.trunk_net(t)
     inner_products = v.T @ inner_weights @ v
-    up_ids = np.triu_indices(inner_products.shape[0],1)
+    up_ids = np.triu_indices(inner_products.shape[0], 1)
     # diag_ids = np.diag_indices(v.shape[1],2)
 
     loss_value = torch.sum(inner_products[up_ids])
     return loss_value
+
 
 def naive_mlp_epoch(
     model,
@@ -74,13 +78,14 @@ def naive_mlp_epoch(
 
     return last_loss, running_loss / len(train_loader)
 
+
 def noisy_mlp_epoch(
     model,
     optimizer,
     train_loader,
     loss_fn: callable = timeseries_MSE_loss,
     dt: float = 1.0,
-    noise_variance: float = 0.01
+    noise_variance: float = 0.01,
 ):
     model.train(True)
     running_loss = 0.0
@@ -103,6 +108,7 @@ def noisy_mlp_epoch(
 
     return last_loss, running_loss / len(train_loader)
 
+
 def noisy_onet_epoch(
     model,
     optimizer,
@@ -111,7 +117,7 @@ def noisy_onet_epoch(
     dt: float = 1.0,
     noise_variance: float = 0.01,
     ortho_loss: bool = True,
-    cuda: bool=True
+    cuda: bool = True,
 ):
     model.train(True)
     running_loss = 0.0
@@ -123,7 +129,7 @@ def noisy_onet_epoch(
 
         noise = noise_variance * torch.randn(xs.shape)
         noisy_x = xs + noise
-        times = torch.linspace(0,1,285)[:,None]
+        times = torch.linspace(0, 1, 285)[:, None]
         if cuda:
             times = times.cuda()
         pred_y = model(noisy_x, times)
@@ -154,15 +160,20 @@ def mlp_test(
             test_loss = running_loss / len(test_loader)
         return test_loss
 
+
 def onet_test(
-    model, test_loader, loss_fn: callable = timeseries_MSE_loss, dt: float = 1.0, cuda: bool=True
+    model,
+    test_loader,
+    loss_fn: callable = timeseries_MSE_loss,
+    dt: float = 1.0,
+    cuda: bool = True,
 ):
     running_loss = 0.0
     model.eval()
     with torch.no_grad():
         for batch in iter(test_loader):
             xs, ys = batch
-            times = torch.linspace(0,1,285)[:,None]
+            times = torch.linspace(0, 1, 285)[:, None]
             if cuda:
                 times = times.cuda()
             pred_y = model(xs, times)
@@ -170,6 +181,7 @@ def onet_test(
             running_loss += loss.item()
             test_loss = running_loss / len(test_loader)
         return test_loss
+
 
 def naive_train(
     model,
@@ -182,15 +194,15 @@ def naive_train(
     name: str = "test",
     save_dir: str = "saved_models",
     print_every: int = 100,
-    dt: float = 1.0
+    dt: float = 1.0,
 ):
     if log_wandb:
         wandb.init(project="DSML Final", name=name)
-    
+
     filename = os.path.join(save_dir, name + ".pkl")
     if os.path.isfile(filename):
         os.rename(filename, filename + "-old")
-    
+
     opt_filename = os.path.join(save_dir, name + "_opt.pkl")
     if os.path.isfile(opt_filename):
         os.rename(opt_filename, opt_filename + "-old")
@@ -220,7 +232,7 @@ def naive_train(
 
         if test_loss < min_error:
             min_error = test_loss
-            
+
             with open(filename, "wb") as f:
                 pkl.dump(model, f)
 
@@ -282,6 +294,7 @@ def noisy_train_mlp(
             with open(opt_filename, "wb") as f:
                 pkl.dump(optimizer, f)
 
+
 def noisy_train_onet(
     model,
     optimizer,
@@ -296,7 +309,7 @@ def noisy_train_onet(
     dt: float = 1.0,
     noise_variance: float = 0.01,
     ortho_loss: bool = True,
-    cuda: bool = True
+    cuda: bool = True,
 ):
     if log_wandb:
         wandb.init(project="DSML Final", name=name)
@@ -304,7 +317,14 @@ def noisy_train_onet(
     min_error = 1e5
     for epoch in range(num_epochs):
         last_loss, running_loss = noisy_onet_epoch(
-            model, optimizer, train_loader, loss_fn, dt, noise_variance, ortho_loss, cuda,
+            model,
+            optimizer,
+            train_loader,
+            loss_fn,
+            dt,
+            noise_variance,
+            ortho_loss,
+            cuda,
         )
         test_loss = onet_test(model, test_loader, loss_fn, cuda)
 

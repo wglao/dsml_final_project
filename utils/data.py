@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 
 
 class PatientDataset(Dataset):
-    def __init__(self, data_file, survival_file, keep_ids=None, cuda: bool=True):
+    def __init__(self, data_file, survival_file, keep_ids=None, cuda: bool = True):
         """
         Arguments:
             data_file (string): Path to the health data csv file with annotations.
@@ -17,10 +17,12 @@ class PatientDataset(Dataset):
         true = np.genfromtxt(survival_file, delimiter=",")[1:].T
         true_days = true[0]
         true_data = true[1:]
-        interp_days = np.arange(1,np.max(true_days)+1)
+        interp_days = np.arange(1, np.max(true_days) + 1)
 
         # interpolate daly values
-        true_interp = torch.tensor(np.asarray([np.interp(interp_days, true_days, fn) for fn in true_data]))
+        true_interp = torch.tensor(
+            np.asarray([np.interp(interp_days, true_days, fn) for fn in true_data])
+        )
 
         max_vals = torch.tensor(np.max(data, axis=0))
         min_vals = torch.tensor(np.min(data, axis=0))
