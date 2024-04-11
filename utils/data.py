@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 
 
 class PatientDataset(Dataset):
-    def __init__(self, data_file, survival_file, keep_ids=None):
+    def __init__(self, data_file, survival_file, keep_ids=None, cuda: bool=True):
         """
         Arguments:
             data_file (string): Path to the health data csv file with annotations.
@@ -38,8 +38,12 @@ class PatientDataset(Dataset):
                 true_interp = true_interp[None, :]
 
         # normalize from -1 to 1
-        self.x = data
-        self.y = true_interp
+        if cuda:
+            self.x = data.cuda()
+            self.y = true_interp.cuda()
+        else:
+            self.x = data
+            self.y = true_interp
 
     def __len__(self):
         return self.x.shape[0]
