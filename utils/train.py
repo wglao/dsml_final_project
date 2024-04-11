@@ -68,7 +68,7 @@ def basis_non_ortho_norm(o_net_model, t, dt: float = 1.0):
 def out_of_range_loss(pred_y, min_val: float=0., max_val: float=1.):
     above = F.relu(pred_y - max_val)
     below = F.relu(min_val - pred_y)
-    loss_value = above + below
+    loss_value = torch.sum((above + below)**2)
     return loss_value
 
 
