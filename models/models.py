@@ -99,10 +99,14 @@ class SirenTrunk(nn.Module):
 
 
 class DeepONet(nn.Module):
-    def __init__(self, branch_dict: dict, trunk_dict: dict):
+    def __init__(self, branch_dict: dict, trunk_dict: dict, cuda: bool=True):
         super().__init__()
         self.branch_net = branch_dict["Net"](**branch_dict["Args"])
         self.trunk_net = trunk_dict["Net"](**trunk_dict["Args"])
+        if cuda:
+            self.branch_net = self.branch_net.cuda()
+            self.trunk_net = self.trunk_net.cuda()
+
 
     def forward(self, x, t, hardtanh: bool = True):
         breakpoint()
