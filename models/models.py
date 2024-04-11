@@ -11,11 +11,14 @@ class MLP(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x):
+    def forward(self, x, hardtanh: bool=True):
         x = F.relu(self.lin_in(x))
         for hidden in self.hidden_list:
             x = F.relu(hidden(x))
         x = self.lin_out(x)
+
+        if hardtanh:
+            return F.hardtanh(x, 0, 1)
         return x
 
 class Siren(nn.Module):
@@ -30,11 +33,14 @@ class Siren(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
     
-    def forward(self, x):
+    def forward(self, x, hardtanh: bool=True):
         x = torch.sin(self.lin_in(x))
         for hidden, a in zip(self.hidden_list, self.hidden_freqs):
             x = torch.sin(hidden(a*x))
         x = self.lin_out(x)
+
+        if hardtanh:
+            return F.hardtanh(x, 0, 1)
         return x
 
 
@@ -46,11 +52,14 @@ class ResNet(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x):
+    def forward(self, x, hardtanh: bool=True):
         x = F.relu(self.lin_in(x))
         for hidden in self.hidden_list:
             x = x + F.relu(hidden(x))
         x = self.lin_out(x)
+
+        if hardtanh:
+            return F.hardtanh(x, 0, 1)
         return x
 
 class TrunkNet(nn.Module):
@@ -93,7 +102,7 @@ class DeepONet(nn.Module):
         self.trunk_net = trunk_dict["Net"](**trunk_dict["Args"])
         
     def forward(self, x, t):
-        c = self.branch_net(x)
+        c = self.branch_net(x, hardtanh=False)
         v = self.trunk_net(t)
         y = c @ v.T
-        return y
+        return F.hardtanh(y, 0, 1)
