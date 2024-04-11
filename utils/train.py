@@ -51,6 +51,19 @@ def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
     loss_value = torch.sum(inner_products[up_ids])
     return loss_value
 
+def basis_non_ortho_norm(o_net_model, t, dt: float = 1.0):
+    time_integrate = dt * torch.ones_like(t)
+    time_integrate[0] = 0.5 * dt
+    time_integrate[-1] = 0.5 * dt
+    inner_weights = torch.diag(time_integrate.ravel())
+    v = o_net_model.trunk_net(t)
+    inner_products = v.T @ inner_weights @ v
+    up_ids = np.triu_indices(inner_products.shape[0], 1)
+    # diag_ids = np.diag_indices(v.shape[1],2)
+
+    loss_value = torch.norm(inner_products[up_ids])
+    return loss_value
+
 
 def naive_mlp_epoch(
     model,
@@ -333,6 +346,9 @@ def noisy_train_onet(
     if log_wandb:
         wandb.init(project="DSML Final", name=name)
 
+    times = torch.linspace(0,1,285)
+    if cuda:
+        times = times.cuda()
     min_error = 1e5
     for epoch in range(num_epochs):
         last_loss, running_loss = noisy_onet_epoch(
@@ -346,7 +362,7 @@ def noisy_train_onet(
             cuda,
         )
         test_loss = onet_test(model, test_loader, loss_fn, cuda)
-
+        non_orthonormality = basis_non_ortho_norm(model, times, dt)
         if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
             if log_wandb:
                 wandb.log(
@@ -355,11 +371,12 @@ def noisy_train_onet(
                         "Train Loss": running_loss,
                         "Test Loss": test_loss,
                         "Last Loss": last_loss,
+                        "Basis Non-Orthonormality": non_orthonormality
                     }
                 )
             print(
-                "Epoch: {}   Train: {} ({})    Test: {}".format(
-                    epoch, running_loss, last_loss, test_loss
+                "Epoch: {}   Train: {} ({})   Test: {}   Non-Ortho: {}".format(
+                    epoch, running_loss, last_loss, test_loss, non_orthonormality
                 )
             )
 
