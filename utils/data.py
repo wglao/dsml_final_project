@@ -22,9 +22,9 @@ class PatientDataset(Dataset):
         # interpolate daly values
         true_interp = torch.tensor(np.asarray([np.interp(interp_days, true_days, fn) for fn in true_data]))
 
-        max_vals = np.max(data, axis=0)
-        min_vals = np.min(data, axis=0)
-        self.transform = lambda x: torch.tensor(2 * ((x - min_vals) / (max_vals - min_vals)) - 1)
+        max_vals = torch.max(data, dim=0)
+        min_vals = torch.min(data, dim=0)
+        self.transform = lambda x: 2 * ((x - min_vals) / (max_vals - min_vals)) - 1
 
         # select with ids
         if keep_ids is not None:
@@ -40,10 +40,10 @@ class PatientDataset(Dataset):
         # normalize from -1 to 1
         if cuda:
             self.x = torch.tensor(data).cuda()
-            self.y = torch.tensor(true_interp).cuda()
+            self.y = true_interp.cuda()
         else:
             self.x = torch.tensor(data)
-            self.y = torch.tensor(true_interp)
+            self.y = true_interp
 
     def __len__(self):
         return self.x.shape[0]
