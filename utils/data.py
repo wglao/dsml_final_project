@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 
 
 class PatientDataset(Dataset):
-    def __init__(self, data_file, survival_file, keep_ids=None, cuda: bool = True):
+    def __init__(self, data_file, survival_file, keep_ids=None):
         """
         Arguments:
             data_file (string): Path to the health data csv file with annotations.
@@ -26,9 +26,6 @@ class PatientDataset(Dataset):
 
         max_vals = torch.tensor(np.max(data, axis=0))
         min_vals = torch.tensor(np.min(data, axis=0))
-        if cuda:
-            max_vals = max_vals.cuda()
-            min_vals = min_vals.cuda()
         self.transform = lambda x: 2 * ((x - min_vals) / (max_vals - min_vals)) - 1
 
         # select with ids
@@ -43,12 +40,8 @@ class PatientDataset(Dataset):
                 true_interp = true_interp[None, :]
 
         # normalize from -1 to 1
-        if cuda:
-            self.x = torch.tensor(data).cuda()
-            self.y = true_interp.cuda()
-        else:
-            self.x = torch.tensor(data)
-            self.y = true_interp
+        self.x = torch.tensor(data)
+        self.y = true_interp
 
     def __len__(self):
         return self.x.shape[0]
