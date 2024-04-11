@@ -49,7 +49,7 @@ def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
     up_ids = np.triu_indices(inner_products.shape[0], 1)
     # diag_ids = np.diag_indices(v.shape[1],2)
 
-    loss_value = torch.sum(inner_products[up_ids])
+    loss_value = torch.sum(inner_products[up_ids]**2)
     return loss_value
 
 def basis_non_ortho_norm(o_net_model, t, dt: float = 1.0):
