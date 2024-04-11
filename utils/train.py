@@ -90,7 +90,7 @@ def noisy_mlp_epoch(
         xs, ys = batch
         optimizer.zero_grad()
         for x, y in zip(xs,ys):
-            noise = noise_variance * torch.randn(x.shape[0])
+            noise = noise_variance * torch.randn(x.shape)
             noisy_x = x + noise
             pred_y = model(noisy_x)
 
@@ -120,7 +120,7 @@ def noisy_onet_epoch(
         xs, ys = batch
         optimizer.zero_grad()
         for x, y in zip(xs,ys):
-            noise = noise_variance * torch.tensor(np.random.randn(*x.shape))
+            noise = noise_variance * torch.randn(*x.shape)
             noisy_x = x + noise
             times = torch.linspace(0,1,285)[:,None]
             pred_y = model(noisy_x, times)
