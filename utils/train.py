@@ -161,7 +161,7 @@ def noisy_onet_epoch(
 
     for batch in iter(train_loader):
         xs, ys = batch
-        times = torch.linspace(0, 1, 285)[:, None]
+        times = torch.reshape(torch.linspace(0, 1, 285),(285,1))
         noise = noise_variance * torch.randn(xs.shape)
         if cuda:
             xs = xs.cuda()
