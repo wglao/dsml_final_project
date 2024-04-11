@@ -105,6 +105,7 @@ class DeepONet(nn.Module):
         self.trunk_net = trunk_dict["Net"](**trunk_dict["Args"])
 
     def forward(self, x, t, hardtanh: bool = True):
+        breakpoint()
         c = self.branch_net(x, hardtanh=False)
         v = self.trunk_net(t)
         y = c @ v.T
