@@ -95,6 +95,8 @@ class SirenTrunk(nn.Module):
     def forward(self, t):
         v = torch.sin((t @ self.lift) + self.lift_bias)
         v = self.body(v)
+        # unit norm basis functions
+        v = v / torch.norm(v,2,0)
         return v
 
 
