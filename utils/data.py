@@ -39,11 +39,11 @@ class PatientDataset(Dataset):
 
         # normalize from -1 to 1
         if cuda:
-            self.x = data.cuda()
-            self.y = true_interp.cuda()
+            self.x = torch.tensor(data).cuda()
+            self.y = torch.tensor(true_interp).cuda()
         else:
-            self.x = data
-            self.y = true_interp
+            self.x = torch.tensor(data)
+            self.y = torch.tensor(true_interp)
 
     def __len__(self):
         return self.x.shape[0]
