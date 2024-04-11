@@ -49,6 +49,7 @@ def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
     ij = inner_products[up_ids]
 
     loss_value = ij - ii
+    return loss_value
 
 def naive_mlp_epoch(
     model,
@@ -111,7 +112,8 @@ def noisy_onet_epoch(
     train_loader,
     loss_fn: callable = timeseries_MSE_loss,
     dt: float = 1.0,
-    noise_variance: float = 0.01
+    noise_variance: float = 0.01,
+    ortho_loss: bool = True
 ):
     model.train(True)
     running_loss = 0.0
@@ -126,6 +128,8 @@ def noisy_onet_epoch(
             times = torch.linspace(0,1,285)[:,None]
             pred_y = model(noisy_x, times)
             loss = loss_fn(pred_y, y, dt)
+            if ortho_loss:
+                loss = loss + basis_ortho_loss(model, times, dt)
             loss.backward()
         optimizer.step()
 
@@ -290,6 +294,7 @@ def noisy_train_onet(
     save_dir: str = "saved_models",
     dt: float = 1.0,
     noise_variance: float = 0.01,
+    ortho_loss: bool = True,
 ):
     if log_wandb:
         wandb.init(project="DSML Final", name=name)
@@ -297,7 +302,7 @@ def noisy_train_onet(
     min_error = 1e5
     for epoch in range(num_epochs):
         last_loss, running_loss = noisy_onet_epoch(
-            model, optimizer, train_loader, loss_fn, dt, noise_variance
+            model, optimizer, train_loader, loss_fn, dt, noise_variance, ortho_loss
         )
         test_loss = onet_test(model, test_loader, loss_fn)
 
