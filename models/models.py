@@ -4,17 +4,18 @@ import torch.nn.functional as F
 
 
 class MLP(nn.Module):
-    def __init__(self, in_size, hidden_size, out_size, layers):
+    def __init__(self, in_size, hidden_size, out_size, layers, act: callable=F.relu):
         super().__init__()
         self.lin_in = nn.Linear(in_size, hidden_size)
         hidden_list = [nn.Linear(hidden_size, hidden_size) for _ in range(layers)]
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
+        self.act = act
 
     def forward(self, x, sigmoid: bool = False):
-        x = F.relu(self.lin_in(x))
+        x = self.act(self.lin_in(x))
         for hidden in self.hidden_list:
-            x = F.relu(hidden(x))
+            x = self.act(hidden(x))
         x = self.lin_out(x)
 
         if sigmoid:
@@ -65,7 +66,7 @@ class ResNet(nn.Module):
 
 
 class TrunkNet(nn.Module):
-    def __init__(self, hidden_size, basis_dims, layers):
+    def __init__(self, hidden_size, basis_dims, layers, act : callable=F.relu):
         super().__init__()
         lift = torch.empty((1, hidden_size))
         lift_bias = torch.empty((1, hidden_size))
@@ -73,10 +74,10 @@ class TrunkNet(nn.Module):
         nn.init.kaiming_uniform_(lift_bias)
         self.lift = nn.Parameter(lift)
         self.lift_bias = nn.Parameter(lift_bias)
-        self.body = MLP(hidden_size, hidden_size, basis_dims, layers - 1)
+        self.body = MLP(hidden_size, hidden_size, basis_dims, layers - 1, act)
 
     def forward(self, t):
-        v = F.relu((t @ self.lift) + self.lift_bias)
+        v = F.silu((t @ self.lift) + self.lift_bias)
         v = self.body(v)
         return v
 
