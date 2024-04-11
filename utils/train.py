@@ -161,7 +161,7 @@ def noisy_onet_epoch(
 
     for batch in iter(train_loader):
         xs, ys = batch
-        times = torch.reshape(torch.linspace(0, 1, 285),(285,1))
+        times = torch.linspace(0, 1, 285)[:,None]
         noise = noise_variance * torch.randn(xs.shape)
         if cuda:
             xs = xs.cuda()
@@ -362,7 +362,7 @@ def noisy_train_onet(
     if log_wandb:
         wandb.init(project="DSML Final", name=name)
 
-    times = torch.linspace(0,1,285)
+    times = torch.linspace(0,1,285)[:,None]
     if cuda:
         times = times.cuda()
     min_error = 1e5
