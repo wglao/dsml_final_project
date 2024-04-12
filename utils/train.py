@@ -47,9 +47,10 @@ def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
     v = o_net_model.trunk_net(t)
     inner_products = v.T @ inner_weights @ v
     up_ids = np.triu_indices(inner_products.shape[0], 1)
-    # diag_ids = np.diag_indices(v.shape[1],2)
+    diag_ids = np.diag_indices(v.shape[1],2)
+    basis_norm_off_unity = torch.sum(F.relu(1-torch.sqrt(inner_products[diag_ids]))**2)
 
-    loss_value = torch.sum(inner_products[up_ids]**2)
+    loss_value = torch.sum(inner_products[up_ids]**2) + basis_norm_off_unity
     return loss_value
 
 def basis_non_ortho_norm(o_net_model, t, dt: float = 1.0):
