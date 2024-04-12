@@ -22,6 +22,37 @@ class MLP(nn.Module):
             return F.sigmoid(x)
         return x
 
+class MLPFunction(nn.Module):
+    def __init__(self, in_size, hidden_size, out_size, layers, act: callable=F.relu):
+        super().__init__()
+        t_embed = torch.empty((1,hidden_size))
+        embed_bias = torch.empty((1,hidden_size))
+        nn.init.kaiming_normal_(t_embed)
+        nn.init.kaiming_normal_(embed_bias)
+        self.t_embed = nn.Parameter(t_embed)
+        self.embed_bias = nn.Parameter(embed_bias)
+
+        self.x_embed = nn.Linear(in_size, hidden_size)
+        self.lin_in = nn.Linear(hidden_size * 2, hidden_size)
+        hidden_list = [nn.Linear(hidden_size, hidden_size) for _ in range(layers)]
+        self.hidden_list = nn.ModuleList(hidden_list)
+        self.lin_out = nn.Linear(hidden_size, out_size)
+        self.act = act
+
+    def forward(self, x, t, sigmoid: bool = False):
+        t = self.act(t @ self.t_embed + self.embed_bias)
+        x = self.act(self.x_embed(x))
+
+        x = torch.vstack([self.lin_in(torch.concat((torch.repeat_interleave(xi,t.shape[0],0),t),dim=1)) for xi in x])
+
+        for hidden in self.hidden_list:
+            x = self.act(hidden(x))
+        x = self.lin_out(x)
+
+        if sigmoid:
+            return F.sigmoid(x)
+        return x
+
 
 class Siren(nn.Module):
     def __init__(self, in_size, hidden_size, out_size, layers, freq_mod: float = 30.0):
