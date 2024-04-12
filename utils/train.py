@@ -216,10 +216,10 @@ def onet_test(
 ):
     running_loss = 0.0
     model.eval()
+    times = torch.linspace(0, 1, 285)[:, None]
     with torch.no_grad():
         for batch in iter(test_loader):
             xs, ys = batch
-            times = torch.linspace(0, 1, 285)[:, None]
             if cuda:
                 xs = xs.cuda()
                 ys = ys.cuda()
@@ -398,6 +398,72 @@ def noisy_train_onet(
             print(
                 "Epoch: {}   Train: {} ({})   Test: {}   Non-Ortho: {}".format(
                     epoch, running_loss, last_loss, test_loss, non_orthonormality
+                )
+            )
+
+        if test_loss < min_error:
+            min_error = test_loss
+            filename = os.path.join(save_dir, name + ".pkl")
+            if os.path.isfile(filename):
+                os.rename(filename, filename + "-old")
+            with open(filename, "wb") as f:
+                pkl.dump(model.state_dict(), f)
+
+            opt_filename = os.path.join(save_dir, name + "_opt.pkl")
+            if os.path.isfile(opt_filename):
+                os.rename(opt_filename, opt_filename + "-old")
+            with open(opt_filename, "wb") as f:
+                pkl.dump(optimizer, f)
+
+def noisy_train_MLPF(
+    model,
+    optimizer,
+    train_loader,
+    test_loader,
+    num_epochs,
+    loss_fn: callable = timeseries_MSE_loss,
+    log_wandb: bool = False,
+    name: str = "test",
+    print_every: int = 100,
+    save_dir: str = "saved_models",
+    dt: float = 1.0,
+    noise_variance: float = 0.01,
+    range_loss: float=0.1,
+    cuda: bool = True,
+):
+    if log_wandb:
+        wandb.init(project="DSML Final", name=name)
+
+    times = torch.linspace(0,1,285)[:,None]
+    if cuda:
+        times = times.cuda()
+    min_error = 1e5
+    for epoch in range(num_epochs):
+        last_loss, running_loss = noisy_onet_epoch(
+            model,
+            optimizer,
+            train_loader,
+            loss_fn,
+            dt,
+            noise_variance,
+            range_loss,
+            ortho_loss=0,
+            cuda=cuda,
+        )
+        test_loss = onet_test(model, test_loader, loss_fn, cuda)
+        if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
+            if log_wandb:
+                wandb.log(
+                    {
+                        "Epoch": epoch,
+                        "Train Loss": running_loss,
+                        "Test Loss": test_loss,
+                        "Last Loss": last_loss,
+                    }
+                )
+            print(
+                "Epoch: {}   Train: {} ({})   Test: {}".format(
+                    epoch, running_loss, last_loss, test_loss
                 )
             )
 
