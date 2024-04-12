@@ -39,27 +39,33 @@ def timeseries_H1_loss(pred_y, y, dt: float = 1.0):
     return H1_value
 
 
-def basis_ortho_loss(o_net_model, t, dt: float = 1.0):
+def basis_ortho_loss(o_net_model, t, dt: float = 1.0, tol: float = 1e-3):
     time_integrate = dt * torch.ones_like(t)
     time_integrate[0] = 0.5 * dt
     time_integrate[-1] = 0.5 * dt
-    inner_weights = torch.diag(time_integrate.ravel())
+    weights = torch.diag(time_integrate.ravel())
     v = o_net_model.trunk_net(t)
-    inner_products = v.T @ inner_weights @ v
+    inner_products = v.T @ weights @ v
+    v_norms = torch.sqrt(torch.diag(inner_products))
+    v = v / v_norms
+    inner_products = v.T @ weights @ v
     up_ids = np.triu_indices(inner_products.shape[0], 1)
     diag_ids = np.diag_indices(v.shape[1],2)
-    basis_norm_off_unity = torch.sum(F.relu(1-torch.sqrt(inner_products[diag_ids]))**2)
+    basis_norm_small = torch.sum(F.relu(tol-torch.sqrt(inner_products[diag_ids]))**2)
 
-    loss_value = torch.sum(inner_products[up_ids]**2) + basis_norm_off_unity
+    loss_value = torch.sum(inner_products[up_ids]**2) + basis_norm_small
     return loss_value
 
 def basis_non_ortho_norm(o_net_model, t, dt: float = 1.0):
     time_integrate = dt * torch.ones_like(t)
     time_integrate[0] = 0.5 * dt
     time_integrate[-1] = 0.5 * dt
-    inner_weights = torch.diag(time_integrate.ravel())
+    weights = torch.diag(time_integrate.ravel())
     v = o_net_model.trunk_net(t)
-    inner_products = v.T @ inner_weights @ v
+    inner_products = v.T @ weights @ v
+    v_norms = torch.sqrt(torch.diag(inner_products))
+    v = v / v_norms
+    inner_products = v.T @ weights @ v
     up_ids = np.triu_indices(inner_products.shape[0], 1)
     # diag_ids = np.diag_indices(v.shape[1],2)
 
