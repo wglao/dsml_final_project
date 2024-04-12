@@ -46,6 +46,7 @@ class MLPFunction(nn.Module):
         x = self.act(self.x_embed(x))
 
         # run times in parallel
+        breakpoint()
         x = torch.vstack([self.lin_in(torch.concat((torch.repeat_interleave(xi,d2,0),t),dim=1)) for xi in x])
 
         for hidden in self.hidden_list:
