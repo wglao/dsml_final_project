@@ -40,14 +40,20 @@ class MLPFunction(nn.Module):
         self.act = act
 
     def forward(self, x, t, sigmoid: bool = False):
+        d1 = x.shape[0]
+        d2 = t.shape[0]
         t = self.act(t @ self.t_embed + self.embed_bias)
         x = self.act(self.x_embed(x))
 
-        x = torch.vstack([self.lin_in(torch.concat((torch.repeat_interleave(xi,t.shape[0],0),t),dim=1)) for xi in x])
+        # run times in parallel
+        x = torch.vstack([self.lin_in(torch.concat((torch.repeat_interleave(xi,d2,0),t),dim=1)) for xi in x])
 
         for hidden in self.hidden_list:
             x = self.act(hidden(x))
         x = self.lin_out(x)
+
+        # reshape to recover timeseries
+        x = torch.reshape(d1,d2)
 
         if sigmoid:
             return F.sigmoid(x)
