@@ -17,14 +17,16 @@ class PatientDataset(Dataset):
         true = np.genfromtxt(survival_file, delimiter=",")[1:].T
         true_days = true[0]
         true_data = true[1:]
-        interp_days = np.arange(1,np.max(true_days)+1)
+        interp_days = np.arange(1, np.max(true_days) + 1)
 
         # interpolate daly values
-        true_interp = torch.tensor(np.asarray([np.interp(interp_days, true_days, fn) for fn in true_data]))
+        true_interp = torch.tensor(
+            np.asarray([np.interp(interp_days, true_days, fn) for fn in true_data])
+        )
 
-        max_vals = np.max(data, axis=0)
-        min_vals = np.min(data, axis=0)
-        self.transform = lambda x: torch.tensor(2 * ((x - min_vals) / (max_vals - min_vals)) - 1)
+        max_vals = torch.tensor(np.max(data, axis=0))
+        min_vals = torch.tensor(np.min(data, axis=0))
+        self.transform = lambda x: 2 * ((x - min_vals) / (max_vals - min_vals)) - 1
 
         # select with ids
         if keep_ids is not None:
@@ -38,7 +40,7 @@ class PatientDataset(Dataset):
                 true_interp = true_interp[None, :]
 
         # normalize from -1 to 1
-        self.x = data
+        self.x = torch.tensor(data)
         self.y = true_interp
 
     def __len__(self):
