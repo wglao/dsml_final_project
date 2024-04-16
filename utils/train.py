@@ -16,7 +16,8 @@ def timeseries_MSE_loss(pred_y, y, dt=None):
 # L2 loss using Lagrange 1st order interpolant
 # default to daily prediction
 def timeseries_L2_loss(pred_y, y, dt: float = 1.0):
-    time_integrate = dt * torch.ones(y.shape[1])
+    device = y.device
+    time_integrate = dt * torch.ones(y.shape[1]).to(device)
     time_integrate[0] = 0.5 * dt
     time_integrate[-1] = 0.5 * dt
     loss_integral = ((pred_y - y) ** 2) @ time_integrate
@@ -27,7 +28,8 @@ def timeseries_L2_loss(pred_y, y, dt: float = 1.0):
 # H1 loss using C1 interpolants (use FD appx for gradient)
 # default to daily prediction
 def timeseries_H1_loss(pred_y, y, dt: float = 1.0):
-    time_integrate = dt * torch.ones(y.shape[1])
+    device = y.device
+    time_integrate = dt * torch.ones(y.shape[1]).to(device)
     time_integrate[0] = 0.5 * dt
     time_integrate[-1] = 0.5 * dt
 
