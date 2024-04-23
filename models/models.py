@@ -12,14 +12,14 @@ class MLP(nn.Module):
         self.lin_out = nn.Linear(hidden_size, out_size)
         self.act = act
 
-    def forward(self, x, sigmoid: bool = False):
+    def forward(self, x, final_act: callable = None):
         x = self.act(self.lin_in(x))
         for hidden in self.hidden_list:
             x = self.act(hidden(x))
         x = self.lin_out(x)
 
-        if sigmoid:
-            return F.sigmoid(x)
+        if final_act is not None:
+            return final_act(x)
         return x
 
 class MLPFunction(nn.Module):
@@ -39,7 +39,7 @@ class MLPFunction(nn.Module):
         self.lin_out = nn.Linear(hidden_size, out_size)
         self.act = act
 
-    def forward(self, x, t, sigmoid: bool = False):
+    def forward(self, x, t, final_act: callable = None):
         d1 = x.shape[0]
         d2 = t.shape[0]
         t = self.act(t @ self.t_embed + self.embed_bias)
@@ -55,8 +55,8 @@ class MLPFunction(nn.Module):
         # reshape to recover timeseries
         x = torch.reshape(x,(d1,d2))
 
-        if sigmoid:
-            return F.sigmoid(x)
+        if final_act is not None:
+            return final_act(x)
         return x
 
 
@@ -72,14 +72,14 @@ class Siren(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x, sigmoid: bool = False):
+    def forward(self, x, final_act: callable = None):
         x = torch.sin(self.lin_in(x))
         for hidden, a in zip(self.hidden_list, self.hidden_freqs):
             x = torch.sin(hidden(a * x))
         x = self.lin_out(x)
 
-        if sigmoid:
-            return F.sigmoid(x)
+        if final_act is not None:
+            return final_act(x)
         return x
 
 
@@ -91,14 +91,14 @@ class ResNet(nn.Module):
         self.hidden_list = nn.ModuleList(hidden_list)
         self.lin_out = nn.Linear(hidden_size, out_size)
 
-    def forward(self, x, sigmoid: bool = False):
+    def forward(self, x, final_act: callable = None):
         x = F.relu(self.lin_in(x))
         for hidden in self.hidden_list:
             x = x + F.relu(hidden(x))
         x = self.lin_out(x)
 
-        if sigmoid:
-            return F.sigmoid(x)
+        if final_act is not None:
+            return final_act(x)
         return x
 
 
@@ -145,10 +145,10 @@ class DeepONet(nn.Module):
         self.trunk_net = trunk_dict["Net"](**trunk_dict["Args"])
 
 
-    def forward(self, x, t, sigmoid: bool = False):
+    def forward(self, x, t, final_act: callable = None):
         c = self.branch_net(x, sigmoid=False)
         v = self.trunk_net(t)
         y = c @ v.T
-        if sigmoid:
+        if final_act is not None:
             return F.sigmoid(y)
         return y

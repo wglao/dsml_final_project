@@ -165,6 +165,7 @@ def noisy_onet_epoch(
     noise_variance: float = 0.01,
     range_loss: float=0.1,
     ortho_loss: float=0.1,
+    final_act: callable=None,
     cuda: bool = True,
 ):
     model.train(True)
@@ -183,7 +184,7 @@ def noisy_onet_epoch(
         optimizer.zero_grad()
         
         noisy_x = xs + noise
-        pred_y = model(noisy_x, times)
+        pred_y = model(noisy_x, times, final_act)
 
         loss = loss_fn(pred_y, ys, dt)
         if ortho_loss:
@@ -222,6 +223,7 @@ def onet_test(
     test_loader,
     loss_fn: callable = timeseries_MSE_loss,
     dt: float = 1.0,
+    final_act: callable=None,
     cuda: bool = True,
 ):
     running_loss = 0.0
@@ -234,7 +236,7 @@ def onet_test(
                 xs = xs.cuda()
                 ys = ys.cuda()
                 times = times.cuda()
-            pred_y = model(xs, times)
+            pred_y = model(xs, times, final_act)
             loss = loss_fn(pred_y, ys, dt)
             running_loss += loss.item()
             test_loss = running_loss / len(test_loader)
@@ -371,6 +373,7 @@ def noisy_train_onet(
     noise_variance: float = 0.01,
     range_loss: float=0.1,
     ortho_loss: float=0.1,
+    final_act: callable=None,
     cuda: bool = True,
 ):
     if log_wandb:
@@ -390,7 +393,8 @@ def noisy_train_onet(
             noise_variance,
             range_loss,
             ortho_loss,
-            cuda,
+            final_act=final_act,
+            cuda=cuda,
         )
         test_loss = onet_test(model, test_loader, loss_fn, cuda)
         non_orthonormality = basis_non_ortho_norm(model, times, dt)
@@ -439,6 +443,7 @@ def noisy_train_MLPF(
     dt: float = 1.0,
     noise_variance: float = 0.01,
     range_loss: float=0.1,
+    final_act: callable=None,
     cuda: bool = True,
 ):
     if log_wandb:
@@ -458,9 +463,10 @@ def noisy_train_MLPF(
             noise_variance,
             range_loss,
             ortho_loss=0,
+            final_act=final_act,
             cuda=cuda,
         )
-        test_loss = onet_test(model, test_loader, loss_fn, cuda)
+        test_loss = onet_test(model, test_loader, loss_fn, final_act=final_act, cuda=cuda)
         if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
             if log_wandb:
                 wandb.log(
