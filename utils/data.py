@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 
 
 class PatientDataset(Dataset):
-    def __init__(self, data_file, survival_file, keep_ids=None):
+    def __init__(self, data_file, survival_file, keep_ids=None, no_time_no_death=True):
         """
         Arguments:
             data_file (string): Path to the health data csv file with annotations.
@@ -14,6 +14,8 @@ class PatientDataset(Dataset):
             keep_ids: use to define ids to keep for train/test split.
         """
         data = np.genfromtxt(data_file, delimiter=",")[1:]
+        if no_time_no_death:
+            data = data[:,:-2]
         true = np.genfromtxt(survival_file, delimiter=",")[1:].T
         true_days = true[0]
         true_data = true[1:]
@@ -24,9 +26,10 @@ class PatientDataset(Dataset):
             np.asarray([np.interp(interp_days, true_days, fn) for fn in true_data])
         )
 
-        max_vals = torch.tensor(np.max(data, axis=0))
-        min_vals = torch.tensor(np.min(data, axis=0))
-        self.transform = lambda x: 2 * ((x - min_vals) / (max_vals - min_vals)) - 1
+        self.max_vals = torch.tensor(np.max(data, axis=0))
+        self.min_vals = torch.tensor(np.min(data, axis=0))
+        self.transform = lambda x: 2 * ((x - self.min_vals) / (self.max_vals - self.min_vals)) - 1
+        self.inv_transform = lambda x: (x + 1) / 2 * (self.max_vals - self.min_vals) + self.min_vals
 
         # select with ids
         if keep_ids is not None:

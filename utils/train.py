@@ -16,27 +16,30 @@ def timeseries_MSE_loss(pred_y, y, dt=None):
 # L2 loss using Lagrange 1st order interpolant
 # default to daily prediction
 def timeseries_L2_loss(pred_y, y, dt: float = 1.0):
-    time_integrate = dt * torch.ones_like(y)
+    device = y.device
+    time_integrate = dt * torch.ones(y.shape[1]).to(device)
     time_integrate[0] = 0.5 * dt
     time_integrate[-1] = 0.5 * dt
-    loss_integral = time_integrate @ ((pred_y - y) ** 2)
-    loss_value = loss_integral
+    loss_integral = ((pred_y - y) ** 2) @ time_integrate
+    loss_value = torch.mean(loss_integral)
     return loss_value
 
 
 # H1 loss using C1 interpolants (use FD appx for gradient)
 # default to daily prediction
 def timeseries_H1_loss(pred_y, y, dt: float = 1.0):
-    time_integrate = dt * torch.ones_like(y)
+    device = y.device
+    time_integrate = dt * torch.ones(y.shape[1]).to(device)
     time_integrate[0] = 0.5 * dt
     time_integrate[-1] = 0.5 * dt
 
-    L2_value = time_integrate @ ((pred_y - y) ** 2)
+    L2_value = ((pred_y - y) ** 2) @ time_integrate
     H1_value = L2_value + (
-        time_integrate
-        @ ((torch.gradient(pred_y - y, spacing=dt, edge_order=2)[0]) ** 2)
+        ((torch.gradient(pred_y - y, spacing=dt, edge_order=2)[0]) ** 2) @ time_integrate
     )
-    return H1_value
+
+    loss_value = torch.mean(H1_value)
+    return loss_value
 
 
 def basis_ortho_loss(o_net_model, t, dt: float = 1.0, tol: float = 1e-3):
