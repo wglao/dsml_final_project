@@ -255,6 +255,7 @@ def naive_train(
     save_dir: str = "saved_models",
     print_every: int = 100,
     dt: float = 1.0,
+    final_act: callable=None,
     cuda: bool = True
 ):
     if log_wandb:
@@ -271,9 +272,9 @@ def naive_train(
     min_error = 1e5
     for epoch in range(num_epochs):
         last_loss, running_loss = naive_mlp_epoch(
-            model, optimizer, train_loader, loss_fn, dt, cuda
+            model, optimizer, train_loader, loss_fn, dt, final_act=final_act, cuda=cuda
         )
-        test_loss = mlp_test(model, test_loader, loss_fn, cuda)
+        test_loss = mlp_test(model, test_loader, loss_fn, final_act, cuda)
 
         if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
             if log_wandb:
@@ -315,6 +316,7 @@ def noisy_train_mlp(
     dt: float = 1.0,
     noise_variance: float = 0.01,
     range_loss: float=0.1,
+    final_act: callable=None,
     cuda: bool = True,
 ):
     if log_wandb:
@@ -323,9 +325,9 @@ def noisy_train_mlp(
     min_error = 1e5
     for epoch in range(num_epochs):
         last_loss, running_loss = noisy_mlp_epoch(
-            model, optimizer, train_loader, loss_fn, dt, noise_variance, cuda, range_loss
+            model, optimizer, train_loader, loss_fn, dt, noise_variance, range_loss, final_act=final_act, cuda=cuda
         )
-        test_loss = mlp_test(model, test_loader, loss_fn, cuda)
+        test_loss = mlp_test(model, test_loader, loss_fn, final_act, cuda)
 
         if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
             if log_wandb:
