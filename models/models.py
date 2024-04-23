@@ -146,9 +146,9 @@ class DeepONet(nn.Module):
 
 
     def forward(self, x, t, final_act: callable = None):
-        c = self.branch_net(x, sigmoid=False)
+        c = self.branch_net(x)
         v = self.trunk_net(t)
         y = c @ v.T
         if final_act is not None:
-            return F.sigmoid(y)
+            return final_act(y)
         return y
