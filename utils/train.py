@@ -396,7 +396,7 @@ def noisy_train_onet(
             final_act=final_act,
             cuda=cuda,
         )
-        test_loss = onet_test(model, test_loader, loss_fn, cuda)
+        test_loss = onet_test(model, test_loader, loss_fn, final_act=final_act, cuda=cuda)
         non_orthonormality = basis_non_ortho_norm(model, times, dt)
         if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
             if log_wandb:
