@@ -589,7 +589,7 @@ def jtrain_o_net(
             ortho_alpha,
             final_act=final_act
         )
-        test_loss = onet_test(model, test_loader, loss_fn, final_act=final_act)
+        test_loss = j_onet_test(model, test_loader, loss_fn, final_act=final_act)
 
         if (epoch == num_epochs - 1) or ((epoch % print_every) == 0):
             if log_wandb:
