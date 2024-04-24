@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 
 
 class PatientDataset(Dataset):
-    def __init__(self, data_file, survival_file, keep_ids=None, no_time_no_death=True):
+    def __init__(self, data_file, survival_file, keep_ids=None, transforms: tuple=None, no_time_no_death=True):
         """
         Arguments:
             data_file (string): Path to the health data csv file with annotations.
@@ -28,8 +28,12 @@ class PatientDataset(Dataset):
 
         self.max_vals = torch.tensor(np.max(data, axis=0))
         self.min_vals = torch.tensor(np.min(data, axis=0))
-        self.transform = lambda x: 2 * ((x - self.min_vals) / (self.max_vals - self.min_vals)) - 1
-        self.inv_transform = lambda x: (x + 1) / 2 * (self.max_vals - self.min_vals) + self.min_vals
+        if transforms is None:
+            self.transform = lambda x: 2 * ((x - self.min_vals) / (self.max_vals - self.min_vals)) - 1
+            self.inv_transform = lambda x: (x + 1) / 2 * (self.max_vals - self.min_vals) + self.min_vals
+        else:
+            self.transform = transforms[0]
+            self.inv_transform = transforms[1]
 
         # select with ids
         if keep_ids is not None:
