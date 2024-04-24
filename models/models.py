@@ -92,7 +92,7 @@ class eFCONet(eqx.Module):
 
         # run times in parallel
         feed_lin_in = lambda x, t: self.lin_in(jnp.concat(x,t))
-        x = self.act(jax.vmap(feed_lin_in, in_axes=(None,0))(x, t))
+        x = self.act(eqx.filter_vmap(feed_lin_in, in_axes=(None,0))(x, t))
 
         for hidden in self.hidden_list:
             x = self.act(hidden(x))
